@@ -833,7 +833,8 @@
   <script>
     (function () {
       // FormSubmit.co AJAX endpoint; no account, first submission triggers activation.
-      var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + "liulian183" + "@" + "crcgas.com";
+      var OWNER_EMAIL = "liulian637" + "@" + "126.com";
+      var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + OWNER_EMAIL;
 
       var form = document.getElementById("reserve-form");
       var statusEl = document.getElementById("form-status");
@@ -908,7 +909,20 @@
           .catch(function () {
             button.disabled = false;
             button.textContent = "Reserve at $14.99";
-            showStatus("Something went wrong. Please try again in a minute.", "err");
+            showStatus("The form could not send. You can email us directly instead.", "err");
+
+            var billCount = form.querySelector("select[name=bill_count]").value || "not specified";
+            var source = document.getElementById("utm_source").value || "direct";
+            var mailto = "mailto:" + OWNER_EMAIL +
+              "?subject=" + encodeURIComponent("Utility Bill Tracker early access") +
+              "&body=" + encodeURIComponent(
+                "Email: " + emailEl.value + "\nBills: " + billCount + "\nSource: " + source
+              );
+            var link = document.createElement("a");
+            link.href = mailto;
+            link.textContent = "Open email draft";
+            statusEl.appendChild(document.createElement("br"));
+            statusEl.appendChild(link);
           });
       });
     })();
