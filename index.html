@@ -3,10 +3,11 @@
   Utility Bill Tracker — validation landing page (e15)
 
   FORM SETUP:
-  This page posts to FormSubmit.co (no account required). The first submission
-  sends an activation email to the owner address configured in FORM_ENDPOINT
-  below; open that email and click the activation link once. After activation,
-  every submission is forwarded to the same inbox with the UTM fields included.
+  This page posts to ShipMyForm (no account required) at /to/<owner email>.
+  The first browser submission creates the form and sends an activation email;
+  open that email and click the link once. After activation, every submission is
+  forwarded to the same inbox with the UTM fields included. The endpoint is
+  origin-bound to helloliulian.github.io.
 
   DEPLOY:
   The page is hosted on GitHub Pages from the public repo
@@ -14,7 +15,7 @@
   ?utm_source=reddit&utm_medium=community&utm_campaign=e15_validation
 
   No external scripts, fonts, or trackers are loaded. The only network request
-  is the form submission to FormSubmit.
+  is the form submission to ShipMyForm.
 -->
 <html lang="en">
 <head>
@@ -770,9 +771,7 @@
             <input type="hidden" name="utm_campaign" id="utm_campaign" value="">
             <input type="hidden" name="page" value="e15-landing">
             <input type="hidden" name="_subject" value="New Utility Bill Tracker waitlist signup">
-            <input type="hidden" name="_captcha" value="false">
-            <input type="hidden" name="_template" value="table">
-            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <input type="text" name="_gotcha" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off" aria-hidden="true">
             <label>
               Email address
               <input type="email" name="email" id="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
@@ -832,9 +831,9 @@
 
   <script>
     (function () {
-      // FormSubmit.co AJAX endpoint; no account, first submission triggers activation.
+      // ShipMyForm no-signup endpoint; first browser submission triggers activation.
       var OWNER_EMAIL = "liulian637" + "@" + "126.com";
-      var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + OWNER_EMAIL;
+      var FORM_ENDPOINT = "https://shipmyform.com/to/" + OWNER_EMAIL;
 
       var form = document.getElementById("reserve-form");
       var statusEl = document.getElementById("form-status");
@@ -898,7 +897,7 @@
             return response.json()
               .catch(function () { return {}; })
               .then(function (data) {
-                var ok = response.ok && String(data.success).toLowerCase() === "true";
+                var ok = response.ok && (data.ok === true || String(data.success).toLowerCase() === "true");
                 if (!ok) throw new Error(data.message || "Request failed: " + response.status);
                 return data;
               });
