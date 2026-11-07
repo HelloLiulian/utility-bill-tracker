@@ -1,0 +1,917 @@
+<!doctype html>
+<!--
+  Utility Bill Tracker — validation landing page (e15)
+
+  FORM SETUP:
+  This page posts to FormSubmit.co (no account required). The first submission
+  sends an activation email to the owner address configured in FORM_ENDPOINT
+  below; open that email and click the activation link once. After activation,
+  every submission is forwarded to the same inbox with the UTM fields included.
+
+  DEPLOY:
+  The page is hosted on GitHub Pages from the public repo
+  HelloLiulian/utility-bill-tracker. Tag every channel link with UTM fields, e.g.
+  ?utm_source=reddit&utm_medium=community&utm_campaign=e15_validation
+
+  No external scripts, fonts, or trackers are loaded. The only network request
+  is the form submission to FormSubmit.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Utility Bill Tracker — Stop missing utility bills</title>
+  <meta name="description" content="Scan a utility bill, get reminders before every due date, and see why this month costs more. No account, no subscription. Early access in development.">
+  <meta name="theme-color" content="#f6f5f1">
+  <meta property="og:title" content="Utility Bill Tracker — Stop missing utility bills">
+  <meta property="og:description" content="Scan a bill, get reminders, and see why this month costs more. No account, no subscription.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f6f5c'/%3E%3Cpath d='M20 18h24v6H20zm0 11h24v6H20zm0 11h16v6H20z' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --surface: #ffffff;
+      --ink: #14161a;
+      --muted: #5c6270;
+      --line: #e3e1da;
+      --accent: #1f6f5c;
+      --accent-dark: #175546;
+      --accent-soft: #e6f1ed;
+      --warn: #b4551f;
+      --warn-soft: #fbeee5;
+      --radius: 18px;
+      --shadow: 0 18px 50px rgba(20, 22, 26, 0.10);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    a { color: var(--accent-dark); }
+
+    .skip {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--ink);
+      color: #fff;
+      padding: 10px 16px;
+      z-index: 100;
+    }
+    .skip:focus { left: 12px; top: 12px; }
+
+    .wrap {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 22px 0;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      font-size: 16px;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: var(--accent);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark svg { width: 18px; height: 18px; }
+
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border: 1px solid #cfe3dc;
+      padding: 5px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 48px;
+      align-items: center;
+      padding: 48px 0 56px;
+    }
+
+    h1 {
+      font-size: clamp(36px, 5.2vw, 58px);
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      margin: 0 0 18px;
+      font-weight: 800;
+      text-wrap: balance;
+    }
+
+    .lede {
+      font-size: clamp(17px, 2vw, 20px);
+      color: var(--muted);
+      margin: 0 0 28px;
+      max-width: 34em;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      font: inherit;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 14px 22px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(31, 111, 92, .22);
+    }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .btn-secondary:hover { background: #fff; border-color: #cfccc2; }
+
+    .trust {
+      margin: 18px 0 0;
+      font-size: 13.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .trust svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+    /* Phone mockup */
+    .phone-wrap {
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .phone-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 8% 12% 2%;
+      background: radial-gradient(circle at 50% 40%, #dcebe5, transparent 68%);
+      filter: blur(6px);
+      z-index: 0;
+    }
+
+    .phone {
+      position: relative;
+      z-index: 1;
+      width: min(300px, 82vw);
+      background: #101216;
+      border-radius: 42px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+      transform: rotate(-1.5deg);
+    }
+
+    .screen {
+      background: #fbfbf9;
+      border-radius: 34px;
+      overflow: hidden;
+      padding: 18px 16px 20px;
+      min-height: 520px;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #6c7280;
+      font-weight: 600;
+      padding: 0 4px 14px;
+    }
+
+    .app-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .app-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+    .app-total { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+    .bill-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid #ecebe5;
+      border-radius: 12px;
+      padding: 11px 12px;
+      margin-top: 9px;
+    }
+
+    .bill-row strong { display: block; font-size: 13.5px; }
+    .bill-row small { color: var(--muted); font-size: 11.5px; }
+    .bill-row b { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+
+    .bill-row.due {
+      border-color: #f0d6c4;
+      background: var(--warn-soft);
+    }
+    .bill-row.due small { color: var(--warn); font-weight: 700; }
+
+    .chart {
+      margin-top: 18px;
+      background: #fff;
+      border: 1px solid #ecebe5;
+      border-radius: 14px;
+      padding: 13px 14px 11px;
+    }
+
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .chart-head span:last-child { color: var(--warn); font-weight: 700; }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 7px;
+      height: 86px;
+      margin-top: 12px;
+    }
+
+    .bars i {
+      flex: 1;
+      height: var(--h);
+      background: #d9e7e2;
+      border-radius: 5px 5px 2px 2px;
+    }
+    .bars i.now { background: var(--accent); }
+
+    .months {
+      display: flex;
+      gap: 7px;
+      margin-top: 6px;
+      font-size: 9.5px;
+      color: #8b909b;
+      text-align: center;
+    }
+    .months span { flex: 1; }
+
+    .phone-note {
+      margin-top: 12px;
+      font-size: 11.5px;
+      color: var(--muted);
+      background: var(--accent-soft);
+      border-radius: 10px;
+      padding: 9px 10px;
+      line-height: 1.4;
+    }
+
+    /* Sections */
+    section { padding: 56px 0; }
+
+    .section-head {
+      max-width: 620px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: clamp(26px, 3.4vw, 36px);
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      margin: 0 0 10px;
+      text-wrap: balance;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 16.5px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+    }
+    .icon svg { width: 21px; height: 21px; }
+
+    .card h3 { font-size: 17px; margin: 0 0 8px; letter-spacing: -0.01em; }
+    .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+    /* Steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      counter-reset: step;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px 22px 24px;
+      position: relative;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .step h3 { font-size: 16px; margin: 0 0 6px; }
+    .step p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+    /* Price */
+    .price-band {
+      background: var(--ink);
+      color: #fff;
+      border-radius: 26px;
+      padding: 42px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .price-band .kicker {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #a9c9bf;
+      margin-bottom: 12px;
+    }
+
+    .price-band h2 { color: #fff; margin-bottom: 12px; }
+    .price-band p { color: #c6c8cd; margin: 0; font-size: 15.5px; }
+
+    .price-figure {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .price-figure strong { font-size: 52px; letter-spacing: -0.04em; line-height: 1; }
+    .price-figure span { color: #a9c9bf; font-weight: 600; }
+
+    .price-list {
+      list-style: none;
+      margin: 22px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 9px;
+    }
+
+    .price-list li {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      font-size: 14.5px;
+      color: #d9dadd;
+    }
+
+    .price-list svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; }
+
+    .fine {
+      font-size: 12.5px;
+      color: #9fa3ab;
+      margin-top: 18px !important;
+    }
+
+    /* Form */
+    .form-band {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .form-band h2 { margin-bottom: 10px; }
+    .form-band > div > p { color: var(--muted); margin: 0; font-size: 15.5px; }
+
+    form { display: grid; gap: 14px; }
+
+    label { font-size: 13.5px; font-weight: 600; display: grid; gap: 6px; }
+
+    input[type="email"], select {
+      font: inherit;
+      font-size: 16px;
+      padding: 13px 14px;
+      border: 1px solid #d5d2c9;
+      border-radius: 11px;
+      background: #fbfbf9;
+      color: var(--ink);
+      width: 100%;
+    }
+
+    input[type="email"]:focus, select:focus {
+      outline: 3px solid rgba(31, 111, 92, .18);
+      border-color: var(--accent);
+    }
+
+    .privacy {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .form-status {
+      font-size: 14px;
+      border-radius: 10px;
+      padding: 11px 13px;
+      display: none;
+    }
+    .form-status.show { display: block; }
+    .form-status.ok { background: var(--accent-soft); color: var(--accent-dark); }
+    .form-status.err { background: #fdeceb; color: #8f2520; }
+
+    /* FAQ */
+    .faq { max-width: 760px; }
+    details {
+      border-top: 1px solid var(--line);
+      padding: 17px 0;
+    }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 16px;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "+";
+      font-size: 20px;
+      color: var(--muted);
+      font-weight: 400;
+      line-height: 1;
+    }
+    details[open] summary::after { content: "–"; }
+    details p { margin: 10px 0 0; color: var(--muted); font-size: 14.5px; max-width: 60em; }
+
+    footer {
+      padding: 34px 0 46px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; gap: 30px; padding-top: 28px; }
+      .phone-wrap { order: -1; }
+      .phone { transform: none; }
+      .screen { min-height: 0; }
+      .cards, .steps { grid-template-columns: 1fr; }
+      .price-band, .form-band { grid-template-columns: 1fr; padding: 30px; }
+      .price-band { gap: 26px; }
+    }
+
+    @media (max-width: 540px) {
+      .wrap { width: calc(100% - 28px); }
+      header { padding: 16px 0; }
+      .pill { display: none; }
+      .hero { padding: 12px 0 40px; }
+      section { padding: 42px 0; }
+      .btn { width: 100%; }
+      .cta-row { flex-direction: column; align-items: stretch; }
+      .price-figure strong { font-size: 44px; }
+      .form-band { padding: 24px; }
+      .price-band { padding: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/>
+            <path d="M9 8h6M9 12h6"/>
+          </svg>
+        </span>
+        Utility Bill Tracker
+      </div>
+      <span class="pill">In development · early access</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div>
+        <h1 id="hero-title">Stop missing utility bills. Track every one.</h1>
+        <p class="lede">Scan a bill, get reminders, and see why this month costs more. No account, no subscription.</p>
+        <div class="cta-row">
+          <button class="btn btn-primary" type="button" data-intent="reserve" data-scroll-to="reserve">Reserve at $14.99</button>
+          <button class="btn btn-secondary" type="button" data-intent="early_access" data-scroll-to="reserve">Get early access</button>
+        </div>
+        <p class="trust">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="10" width="16" height="10" rx="2"/>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+          No account. Your bills stay on your device.
+        </p>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone" aria-hidden="true">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span>100%</span></div>
+            <div class="app-head">
+              <span class="app-title">July bills</span>
+              <span class="app-total">$412.80</span>
+            </div>
+
+            <div class="bill-row due">
+              <div><strong>City Water</strong><small>Due in 2 days</small></div>
+              <b>$68.40</b>
+            </div>
+            <div class="bill-row">
+              <div><strong>Power &amp; Light</strong><small>Due Jul 18</small></div>
+              <b>$186.20</b>
+            </div>
+            <div class="bill-row">
+              <div><strong>Gas</strong><small>Due Jul 24</small></div>
+              <b>$94.10</b>
+            </div>
+            <div class="bill-row">
+              <div><strong>Internet</strong><small>Due Jul 29</small></div>
+              <b>$64.10</b>
+            </div>
+
+            <div class="chart">
+              <div class="chart-head"><span>Electric usage</span><span>+18%</span></div>
+              <div class="bars">
+                <i style="--h:46%"></i>
+                <i style="--h:52%"></i>
+                <i style="--h:38%"></i>
+                <i style="--h:61%"></i>
+                <i style="--h:57%"></i>
+                <i class="now" style="--h:74%"></i>
+              </div>
+              <div class="months">
+                <span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span>
+              </div>
+            </div>
+
+            <div class="phone-note">Last July was $142. That extra $44 lines up with 9 more cooling days.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="why-title">
+      <div class="section-head">
+        <h2 id="why-title">Built for the three things that actually go wrong</h2>
+        <p>Not another budgeting app. Just the boring parts of household bills, done reliably.</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1f6f5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 8h3l2-2h6l2 2h3v11H4z"/>
+              <circle cx="12" cy="13" r="3.2"/>
+            </svg>
+          </div>
+          <h3>Scan in seconds</h3>
+          <p>Photograph electric, gas, water, or internet bills. On-device OCR fills the amounts; correct anything in one tap.</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1f6f5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/>
+              <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
+            </svg>
+          </div>
+          <h3>Reminders that arrive</h3>
+          <p>Local notifications 7, 3, and 1 day before each due date. Send yourself a test reminder before you rely on it.</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1f6f5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+            </svg>
+          </div>
+          <h3>See what changed</h3>
+          <p>Month-over-month usage and cost, so a surprise bill has an explanation instead of a guess.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="how-title">
+      <div class="section-head">
+        <h2 id="how-title">Three taps, once a month</h2>
+        <p>No bank connection. No logins. No budgeting categories to maintain.</p>
+      </div>
+      <div class="steps">
+        <article class="step">
+          <h3>Scan or type the bill</h3>
+          <p>Snap a photo or enter the amount and due date. Everything stays on your phone.</p>
+        </article>
+        <article class="step">
+          <h3>Get reminded</h3>
+          <p>One notification before the due date. Mark it paid and it moves out of the way.</p>
+        </article>
+        <article class="step">
+          <h3>Review the trend</h3>
+          <p>See this month against last year, and export a CSV or PDF when you need it.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="price-title">
+      <div class="price-band">
+        <div>
+          <span class="kicker">Founding cohort</span>
+          <h2 id="price-title">One price. No subscription.</h2>
+          <p>Utility bills are already recurring. The app that tracks them shouldn't be.</p>
+        </div>
+        <div>
+          <div class="price-figure"><strong>$14.99</strong><span>one-time</span></div>
+          <ul class="price-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7fc3ae" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+              Unlimited bills and reminder history
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7fc3ae" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+              Usage trends and year-over-year comparison
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7fc3ae" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+              CSV and PDF export
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7fc3ae" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+              iCloud backup and Face ID lock
+            </li>
+          </ul>
+          <p class="fine">Free for up to 5 bills. Nothing is charged on this page — the button below only reserves early access.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" id="reserve" aria-labelledby="reserve-title">
+      <div class="form-band">
+        <div>
+          <h2 id="reserve-title">Reserve the founding price</h2>
+          <p>Leave your email and we'll send one message when early access opens. No spam, no account required.</p>
+        </div>
+        <div>
+          <form id="reserve-form" method="POST" novalidate>
+            <input type="hidden" name="intent" id="intent" value="early_access">
+            <input type="hidden" name="utm_source" id="utm_source" value="">
+            <input type="hidden" name="utm_medium" id="utm_medium" value="">
+            <input type="hidden" name="utm_campaign" id="utm_campaign" value="">
+            <input type="hidden" name="page" value="e15-landing">
+            <input type="hidden" name="_subject" value="New Utility Bill Tracker waitlist signup">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_template" value="table">
+            <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label>
+              Email address
+              <input type="email" name="email" id="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+            </label>
+            <label>
+              How many utility bills do you manage?
+              <select name="bill_count">
+                <option value="">Optional</option>
+                <option value="1-2">1–2</option>
+                <option value="3-4">3–4</option>
+                <option value="5+">5 or more</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Reserve at $14.99</button>
+            <p class="privacy">We only use your email to announce early access. No card, no charge, unsubscribe anytime.</p>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap faq" aria-labelledby="faq-title">
+      <div class="section-head">
+        <h2 id="faq-title">Questions</h2>
+      </div>
+      <details>
+        <summary>Do I need to create an account?</summary>
+        <p>No. Bills and reminders are stored on your device, with optional iCloud backup. There is no login and no account to lose.</p>
+      </details>
+      <details>
+        <summary>Can I scan a paper bill?</summary>
+        <p>Yes. The planned flow is photo capture with on-device text recognition. Any field the scanner gets wrong can be corrected before saving.</p>
+      </details>
+      <details>
+        <summary>Does it pay bills or connect to my bank?</summary>
+        <p>No. It reminds you and tracks what you owe. It does not move money, store bank credentials, or connect to utility accounts.</p>
+      </details>
+      <details>
+        <summary>What will it cost?</summary>
+        <p>The founding price is $14.99 one-time. There is no subscription. The free tier covers up to 5 bills.</p>
+      </details>
+      <details>
+        <summary>When will it be available?</summary>
+        <p>It is still in development. People on the early access list will be the first to try it and will get the founding price.</p>
+      </details>
+      <details>
+        <summary>Where is my data stored?</summary>
+        <p>On your device, with optional iCloud backup. The validation page you are reading does not collect bill data — only the email you choose to submit.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <span>Utility Bill Tracker — early-stage prototype. Not affiliated with any utility company.</span>
+    <span>&copy; <span id="year"></span></span>
+  </footer>
+
+  <script>
+    (function () {
+      // FormSubmit.co AJAX endpoint; no account, first submission triggers activation.
+      var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + "liulian183" + "@" + "crcgas.com";
+
+      var form = document.getElementById("reserve-form");
+      var statusEl = document.getElementById("form-status");
+      var intentEl = document.getElementById("intent");
+      var emailEl = document.getElementById("email");
+
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      // Preserve channel attribution across the page.
+      var params = new URLSearchParams(window.location.search);
+      ["utm_source", "utm_medium", "utm_campaign"].forEach(function (key) {
+        var value = params.get(key) || "";
+        if (value) {
+          document.getElementById(key).value = value;
+          try { sessionStorage.setItem("e15_" + key, value); } catch (e) {}
+        } else {
+          try {
+            var saved = sessionStorage.getItem("e15_" + key);
+            if (saved) document.getElementById(key).value = saved;
+          } catch (e) {}
+        }
+      });
+
+      // Both hero buttons lead to the form and record which CTA was clicked.
+      document.querySelectorAll("[data-intent]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          intentEl.value = button.getAttribute("data-intent");
+          var target = document.getElementById("reserve");
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.setTimeout(function () { emailEl.focus({ preventScroll: true }); }, 350);
+        });
+      });
+
+      function showStatus(message, kind) {
+        statusEl.textContent = message;
+        statusEl.className = "form-status show " + kind;
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!emailEl.checkValidity()) {
+          showStatus("Please enter a valid email address.", "err");
+          emailEl.focus();
+          return;
+        }
+        if (FORM_ENDPOINT.indexOf("REPLACE_ME") !== -1) {
+          showStatus("The form is temporarily unavailable. Please try again later.", "err");
+          return;
+        }
+
+        var button = form.querySelector("button[type=submit]");
+        button.disabled = true;
+        button.textContent = "Reserving…";
+
+        fetch(FORM_ENDPOINT, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { Accept: "application/json" }
+        })
+          .then(function (response) {
+            return response.json()
+              .catch(function () { return {}; })
+              .then(function (data) {
+                var ok = response.ok && String(data.success).toLowerCase() === "true";
+                if (!ok) throw new Error(data.message || "Request failed: " + response.status);
+                return data;
+              });
+          })
+          .then(function () {
+            form.innerHTML = '<p class="form-status ok show" role="status">You are on the list. We will email you when early access opens.</p>';
+          })
+          .catch(function () {
+            button.disabled = false;
+            button.textContent = "Reserve at $14.99";
+            showStatus("Something went wrong. Please try again in a minute.", "err");
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
